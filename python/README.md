@@ -69,7 +69,7 @@ def on_like(e):
 asyncio.run(live.run())
 ```
 
-No key, no config, no signup. Pass `api_key=` (or set `TIKTOOL_API_KEY`) to lift the per-IP caps when you hit them - free at <https://tik.tools>.
+No key. No config. Just run it.
 
 ---
 
