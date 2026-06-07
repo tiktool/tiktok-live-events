@@ -46,13 +46,25 @@ def _fmt(name: str, e: Any) -> str:
     return f"[{name}] {json.dumps(e)[:200]}"
 
 
-async def _run(args: argparse.Namespace) -> int:
-    username = args.username.lstrip("@").strip()
+async def _prompt_key(message: str) -> str:
+    print("")
+    print(f"[limit]   {message}", file=sys.stderr)
+    loop = asyncio.get_event_loop()
+    answer = await loop.run_in_executor(
+        None,
+        lambda: input("[events] Paste your API key (or press Enter to quit): "),
+    )
+    return (answer or "").strip()
+
+
+async def _run_once(username: str, api_key: str, args: argparse.Namespace) -> tuple[bool, str]:
+    """Returns (rate_limited, limit_message)."""
     if not args.emit_json:
         print(f"[events] connecting to @{username} ...")
 
     filter_set = {s.strip() for s in args.filter.split(",") if s.strip()} if args.filter else None
-    live = TikTokLive(username, api_key=args.api_key)
+    live = TikTokLive(username, api_key=api_key)
+    limit_msg = {"text": ""}
 
     def show(name: str, payload: Any) -> None:
         if filter_set is not None and name not in filter_set:
@@ -73,17 +85,33 @@ async def _run(args: argparse.Namespace) -> int:
 
     @live.on("rate_limited")
     def _rl(e):  # noqa: ANN001
-        msg = e.get("message") or "rate limit reached."
-        print(f"[limit]   {msg}", file=sys.stderr)
+        limit_msg["text"] = e.get("message") or "Anonymous limit reached. Grab a free API key at https://tik.tools to lift the cap."
 
-    try:
-        await live.run()
-    except KeyboardInterrupt:
-        return 0
-    except Exception as e:  # noqa: BLE001
-        print(f"[events] failed: {e}", file=sys.stderr)
-        return 1
-    return 0
+    await live.run()
+    return (bool(limit_msg["text"]), limit_msg["text"])
+
+
+async def _run(args: argparse.Namespace) -> int:
+    username = args.username.lstrip("@").strip()
+    api_key = args.api_key or ""
+
+    while True:
+        try:
+            rate_limited, msg = await _run_once(username, api_key, args)
+        except KeyboardInterrupt:
+            return 0
+        except Exception as e:  # noqa: BLE001
+            print(f"[events] failed: {e}", file=sys.stderr)
+            return 1
+
+        if not rate_limited:
+            return 0
+
+        new_key = await _prompt_key(msg)
+        if not new_key:
+            print("[events] no key entered. Exiting.")
+            return 0
+        api_key = new_key
 
 
 def main(argv: Optional[list[str]] = None) -> int:

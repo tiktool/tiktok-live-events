@@ -6,6 +6,7 @@
  *   tiktok-live-events <username> [--filter chat,gift,...] [--json]
  */
 import { TikTokLive } from './index.js';
+import * as readline from 'readline';
 
 interface Args {
     username?: string;
@@ -66,50 +67,88 @@ function fmt(name: string, e: any): string {
     }
 }
 
+function promptKey(message: string): Promise<string> {
+    return new Promise((resolveP) => {
+        const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+        console.log('');
+        console.log(`[limit]   ${message}`);
+        rl.question('[events] Paste your API key (or press Enter to quit): ', (answer) => {
+            rl.close();
+            resolveP((answer || '').trim());
+        });
+    });
+}
+
+async function connectLoop(username: string, args: Args): Promise<void> {
+    let apiKey = args.apiKey || process.env.TIKTOOL_API_KEY || '';
+
+    while (true) {
+        if (!args.json) console.log(`[events] connecting to @${username} ...`);
+
+        const live = new TikTokLive(username, { apiKey });
+        const filter = args.filter;
+        const shouldShow = (name: string) => !filter || filter.has(name);
+
+        const wrap = (name: string) => (e: any) => {
+            if (!shouldShow(name)) return;
+            if (args.json) process.stdout.write(JSON.stringify({ type: name, data: e }) + '\n');
+            else console.log(fmt(name, e));
+        };
+
+        const names = ['chat','gift','like','follow','share','join','subscribe','viewer','roomUser','connected','streamEnd'];
+        for (const n of names) live.on(n as any, wrap(n));
+
+        let limitMsg = '';
+        const limitFired: Promise<void> = new Promise<void>((resolveP) => {
+            live.on('rateLimited', (e: any) => {
+                limitMsg = e?.message || e?.reason || 'Anonymous limit reached. Grab a free API key at https://tik.tools to lift the cap.';
+                resolveP();
+            });
+        });
+        const endFired: Promise<void> = new Promise<void>((resolveP) => {
+            live.on('disconnected', () => {
+                if (!args.json) console.log(fmt('disconnected', {}));
+                resolveP();
+            });
+        });
+
+        live.on('error', (e: any) => console.error(fmt('error', e)));
+
+        const cleanup = () => { try { live.disconnect(); } catch {} process.exit(0); };
+        process.on('SIGINT', cleanup);
+        process.on('SIGTERM', cleanup);
+
+        try { await live.connect(); }
+        catch (e: any) {
+            console.error(`[events] failed: ${e?.message || e}`);
+            process.exit(1);
+        }
+
+        const wasLimit = await Promise.race([
+            limitFired.then(() => true),
+            endFired.then(() => false),
+        ]);
+
+        try { live.disconnect(); } catch {}
+
+        if (!wasLimit) return;
+
+        // Rate-limited. Prompt user for an API key + retry.
+        const newKey = await promptKey(limitMsg);
+        if (!newKey) {
+            console.log('[events] no key entered. Exiting.');
+            return;
+        }
+        apiKey = newKey;
+        // Loop again with the new key.
+    }
+}
+
 async function main() {
     const args = parseArgs(process.argv);
     if (!args.username) { help(); process.exit(1); }
-
     const username = args.username.replace(/^@/, '').trim();
-    if (!args.json) console.log(`[events] connecting to @${username} ...`);
-
-    const live = new TikTokLive(username, { apiKey: args.apiKey });
-    const filter = args.filter;
-    const shouldShow = (name: string) => !filter || filter.has(name);
-
-    const wrap = (name: string) => (e: any) => {
-        if (!shouldShow(name)) return;
-        if (args.json) {
-            process.stdout.write(JSON.stringify({ type: name, data: e }) + '\n');
-        } else {
-            console.log(fmt(name, e));
-        }
-    };
-
-    const names = ['chat','gift','like','follow','share','join','subscribe','viewer','roomUser','connected','streamEnd'];
-    for (const n of names) live.on(n as any, wrap(n));
-
-    let rateLimited = false;
-    live.on('rateLimited', (e: any) => {
-        console.error(fmt('rateLimited', e));
-        rateLimited = true;
-    });
-    live.on('error', (e: any) => console.error(fmt('error', e)));
-    live.on('disconnected', () => {
-        if (!args.json) console.log(fmt('disconnected', {}));
-        if (rateLimited) process.exit(0);
-    });
-
-    const cleanup = () => { try { live.disconnect(); } catch {} process.exit(0); };
-    process.on('SIGINT', cleanup);
-    process.on('SIGTERM', cleanup);
-
-    try {
-        await live.connect();
-    } catch (e: any) {
-        console.error(`[events] failed: ${e?.message || e}`);
-        process.exit(1);
-    }
+    await connectLoop(username, args);
 }
 
 main();

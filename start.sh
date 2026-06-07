@@ -7,12 +7,8 @@ if ! command -v node >/dev/null 2>&1; then
     exit 1
 fi
 
-if ! command -v tiktok-live-events >/dev/null 2>&1; then
-    echo "[events] Installing tiktok-live-events globally..."
-    if ! npm i -g tiktok-live-events 2>/dev/null; then
-        echo "[events] Global install needs sudo? Falling back to npx."
-    fi
-fi
+echo "[events] Updating tiktok-live-events..."
+npm i -g tiktok-live-events@latest >/dev/null 2>&1 || echo "[events] global install failed - will use npx"
 
 if [[ -t 0 ]]; then
     read -rp "Enter the TikTok username (without @): " TTUSER
