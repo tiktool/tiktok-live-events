@@ -89,9 +89,16 @@ async function main() {
     const names = ['chat','gift','like','follow','share','join','subscribe','viewer','roomUser','connected','streamEnd'];
     for (const n of names) live.on(n as any, wrap(n));
 
-    live.on('rateLimited', (e: any) => console.error(fmt('rateLimited', e)));
+    let rateLimited = false;
+    live.on('rateLimited', (e: any) => {
+        console.error(fmt('rateLimited', e));
+        rateLimited = true;
+    });
     live.on('error', (e: any) => console.error(fmt('error', e)));
-    live.on('disconnected', () => { if (!args.json) console.log(fmt('disconnected', {})); });
+    live.on('disconnected', () => {
+        if (!args.json) console.log(fmt('disconnected', {}));
+        if (rateLimited) process.exit(0);
+    });
 
     const cleanup = () => { try { live.disconnect(); } catch {} process.exit(0); };
     process.on('SIGINT', cleanup);
