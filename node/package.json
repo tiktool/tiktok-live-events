@@ -1,0 +1,86 @@
+{
+    "name": "tiktok-live-events",
+    "version": "1.0.0",
+    "description": "TikTok LIVE event stream for Node.js + TypeScript. Read chat, gifts, viewers, follows, PK battles, AI captions, moderation deletes and 50+ real-time event types from any TikTok LIVE stream over a single WebSocket. 2026 edition.",
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "exports": {
+        ".": {
+            "import": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.mjs"
+            },
+            "require": {
+                "types": "./dist/index.d.ts",
+                "default": "./dist/index.js"
+            }
+        }
+    },
+    "files": [
+        "dist",
+        "README.md",
+        "LICENSE"
+    ],
+    "scripts": {
+        "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+        "prepublishOnly": "npm run build"
+    },
+    "keywords": [
+        "tiktok",
+        "tiktok-live",
+        "tiktok-live-api",
+        "tiktok-live-events",
+        "tiktok-live-2026",
+        "tiktok-live-v3",
+        "tiktok-live-sdk",
+        "tiktok-live-nodejs",
+        "tiktok-live-typescript",
+        "tiktok-live-connector",
+        "tiktok-live-watcher",
+        "tiktok-live-reader",
+        "tiktok-live-listener",
+        "tiktok-live-stream",
+        "tiktok-live-chat",
+        "tiktok-live-gifts",
+        "tiktok-live-likes",
+        "tiktok-live-followers",
+        "tiktok-live-viewers",
+        "tiktok-live-battle",
+        "tiktok-pk",
+        "tiktok-pk-battle",
+        "tiktok-live-captions",
+        "tiktok-webcast",
+        "tiktok-events",
+        "tiktok-realtime",
+        "tiktok-chat-bot",
+        "tiktok-overlay",
+        "tiktok-creator-tools",
+        "tiktok-analytics",
+        "live-streaming",
+        "websocket",
+        "real-time"
+    ],
+    "author": "TikTools",
+    "license": "MIT",
+    "homepage": "https://github.com/tiktool/tiktok-live-events",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tiktool/tiktok-live-events"
+    },
+    "bugs": {
+        "url": "https://github.com/tiktool/tiktok-live-events/issues"
+    },
+    "dependencies": {
+        "ws": "^8.18.0"
+    },
+    "devDependencies": {
+        "@types/node": "^22.0.0",
+        "@types/ws": "^8.5.14",
+        "tsup": "^8.3.0",
+        "typescript": "^5.7.0"
+    },
+    "engines": {
+        "node": ">=18"
+    }
+}

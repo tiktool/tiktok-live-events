@@ -1,0 +1,73 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tiktok-live-events"
+version = "1.0.0"
+description = "TikTok LIVE event stream for Python. Read chat, gifts, viewers, follows, PK battles, AI captions, moderation deletes and 50+ real-time event types from any TikTok LIVE stream over a single WebSocket. 2026 edition."
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [{ name = "TikTools" }]
+keywords = [
+    "tiktok",
+    "tiktok-live",
+    "tiktok-live-api",
+    "tiktok-live-events",
+    "tiktok-live-2026",
+    "tiktok-live-v3",
+    "tiktok-live-sdk",
+    "tiktok-live-python",
+    "tiktok-live-watcher",
+    "tiktok-live-reader",
+    "tiktok-live-listener",
+    "tiktok-live-stream",
+    "tiktok-live-chat",
+    "tiktok-live-gifts",
+    "tiktok-live-likes",
+    "tiktok-live-followers",
+    "tiktok-live-viewers",
+    "tiktok-live-battle",
+    "tiktok-pk",
+    "tiktok-pk-battle",
+    "tiktok-live-captions",
+    "tiktok-webcast",
+    "tiktok-events",
+    "tiktok-realtime",
+    "tiktok-chat-bot",
+    "tiktok-overlay",
+    "tiktok-creator-tools",
+    "tiktok-analytics",
+    "live-streaming",
+    "websocket",
+    "real-time",
+    "asyncio",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet",
+    "Topic :: Multimedia",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Typing :: Typed",
+]
+dependencies = [
+    "websockets>=12.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/tiktool/tiktok-live-events"
+Documentation = "https://github.com/tiktool/tiktok-live-events#readme"
+Issues = "https://github.com/tiktool/tiktok-live-events/issues"
+Repository = "https://github.com/tiktool/tiktok-live-events"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tiktok_live_events"]
