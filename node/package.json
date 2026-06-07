@@ -1,10 +1,13 @@
 {
     "name": "tiktok-live-events",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "TikTok LIVE event stream for Node.js + TypeScript. Read chat, gifts, viewers, follows, PK battles, AI captions, moderation deletes and 50+ real-time event types from any TikTok LIVE stream over a single WebSocket. 2026 edition.",
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
+    "bin": {
+        "tiktok-live-events": "./dist/cli.js"
+    },
     "exports": {
         ".": {
             "import": {
@@ -20,10 +23,12 @@
     "files": [
         "dist",
         "README.md",
-        "LICENSE"
+        "LICENSE",
+        "start.bat",
+        "start.sh"
     ],
     "scripts": {
-        "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+        "build": "tsup src/index.ts src/cli.ts --format cjs,esm --dts --clean",
         "prepublishOnly": "npm run build"
     },
     "keywords": [
