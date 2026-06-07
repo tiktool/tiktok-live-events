@@ -4,7 +4,7 @@
 
 **The 2026 TikTok LIVE event stream for Node.js + TypeScript.**
 
-Read chat, gifts, viewers, follows, PK battles, native captions, moderation deletes and **50+ real-time event types** from any TikTok LIVE stream in 4 lines of code.
+Read chat, gifts, viewers, follows, PK battles, AI captions, polls, karaoke, pictionary, live shopping, moderation deletes and **80+ real-time event types** from any TikTok LIVE stream in 4 lines of code.
 
 [![npm](https://img.shields.io/npm/v/tiktok-live-events)](https://www.npmjs.com/package/tiktok-live-events)
 [![downloads](https://img.shields.io/npm/dm/tiktok-live-events)](https://www.npmjs.com/package/tiktok-live-events)
@@ -66,6 +66,22 @@ No key. No config. Just run it.
 - **Tiny.** Under 5 KB compiled, one runtime dependency (`ws`).
 
 The protocol decode happens on the [TikTools](https://tik.tools) edge. Your code only ever sees clean JSON.
+
+---
+
+## How it works (free / anon / paid)
+
+You open ONE WebSocket to `wss://api.tik.tools`. The TikTools edge owns the upstream TikTok session, decodes every frame server-side, and forwards typed JSON events back to your socket in real-time. Your machine never talks to TikTok directly - the SDK has zero protocol code, no proxy setup, no headless browser.
+
+| Mode | API key? | What you get | When to use |
+|---|---|---|---|
+| **Anonymous** | No key. Just `new TikTokLive('streamer')`. | All 80+ event types, capped per-IP (a handful of connects/hour, sessions up to 10 min). | Hello-world demos, scripts that watch one stream now and then. |
+| **Free key** | Free signup at [tik.tools](https://tik.tools) - no card. | Lifted per-IP caps, longer sessions, REST + WS quota. | Bots, OBS overlays, analytics that need to stay connected. |
+| **Paid tiers** | Same key, upgraded tier. | More concurrent sockets, higher request quota, full agency intel layer. | Production at scale. |
+
+When the anonymous cap is reached, the SDK emits a `rateLimited` event and stops reconnecting until you supply a key. The CLI prompts for one interactively. Everything else stays identical across tiers - the only thing that changes is the cap.
+
+Pricing tiers and current limits live on the [pricing page](https://tik.tools/pricing) (single source of truth, geo-aware).
 
 ---
 
@@ -134,7 +150,7 @@ Every event is dispatched by name via the typed emitter. `live.on('chat', e => .
 | `connected` | Socket open. |
 | `disconnected` | Socket close. Includes the close code + reason. |
 | `roomInfo` | One-shot post-connect: `{ roomId, wsHost, clusterRegion, connectedAt }`. |
-| `chat` | `user`, `comment`, `emotes`, optional `starred`. **v3** adds `language` (auto-detected) + `messageUuid`. |
+| `chat` | `user`, `comment`, `emotes`, optional `starred`. **v3** adds `language` (auto-detected), `messageUuid`, `replyToUser` (~8% of chats are replies). |
 | `gift` | `giftId`, `giftName`, `diamondCount`, `repeatCount`, `repeatEnd`, `giftType`. **v3** adds `transactionId`, `senderUserId`, `relationship` (`joinDayNumber`). |
 | `like` | `likeCount` (this batch), `totalLikes` (room cumulative). |
 | `member` | Viewer joined. **v3** adds `entrySource` (`"homepage_hot-live_cell"`, `"follow-tab"`, ...), `entryAction` (`"draw"`/`"click"`), `entryType` (`"rec"`). |
@@ -158,7 +174,7 @@ Every event is dispatched by name via the typed emitter. `live.on('chat', e => .
 
 | Event | What it carries |
 |---|---|
-| `caption` | **NEW in v3.** TikTok native auto-captions ride on the LIVE WebSocket. `text`, `isFinal`, `startedAtMs`, `endsAtMs`. |
+| `caption` | **NEW in v3.** TikTok native auto-captions ride on the LIVE WebSocket. `text`, `language` (auto-detected), `isFinal`, `startedAtMs`, `endsAtMs`. |
 
 ### Creator + room
 
@@ -186,6 +202,7 @@ Every event is dispatched by name via the typed emitter. `live.on('chat', e => .
 | Event | What it carries |
 |---|---|
 | `giftPanelUpdate` | Real-time gift catalog change. |
+| `giftCollectionUpdate` | Host curated gift set changed. **v3** |
 | `giftDynamicRestriction`, `giftGallery`, `giftUnlock`, `viewerPicksUpdate` | Gift availability flips, host gift wall, gated-gift reveals, viewer-pick highlights. |
 | `oecLiveShopping`, `oecLiveManager`, `oecLiveBillboard`, `ecShortItemRefresh` | OEC live-shopping events. |
 
@@ -196,13 +213,28 @@ Every event is dispatched by name via the typed emitter. `live.on('chat', e => .
 | `aiSummary` | TikTok AI summary of the room (entry-time recap, multi-language). |
 | `poll`, `shortTouch` | In-stream poll lifecycle. |
 | `question`, `questionSelected`, `questionSlideDown` | Q&A round events. |
-| `pictionaryUpdate`, `pictionaryEnd`, `pictionaryExit` | Drawing-game rounds. |
+| `pictionaryStart`, `pictionaryUpdate`, `pictionaryEnd`, `pictionaryExit` | Drawing-game rounds. **v3** |
+| `karaokeReq` | Viewer queued / requested a track on the host's karaoke widget. **v3** |
+| `subPin` | Comment pinned by a paid subscriber via the sub-only pin slot. **v3** |
+| `toast`, `gapHighlightPushGuide` | Generic toast popups and first-render UX hints. **v3** |
+| `gameAutoPostNotice` | Notice posted automatically by an in-room mini-game. **v3** |
+| `cohostSettingsUpdate` | Cohost settings updated (slot count, layout, permissions). **v3** |
 | `fansEvent`, `fanTicket` | Fan-club events. |
 | `envelope`, `envelopePortal` | Red-envelope drops + multi-room portal chain. |
 | `gameMoment`, `gameServerFeature` | TikTok Gaming live integration. |
 | `groupLiveMemberNotify` | Group-live member join / leave. |
 | `perception` | Perception event (mute cancel, hint signal). |
 | `control`, `room`, `liveIntro` | Stream control + room metadata. |
+
+### Universal field: `extras`
+
+Every event carries an optional `extras: Record<string, ...>` map containing any payload field TikTok ships that doesn't yet have a typed name. New fields appear automatically the day TikTok introduces them - no SDK upgrade required. Use it as a forward-compat hook:
+
+```ts
+live.on('chat', e => {
+  if (e.extras?.['18']) console.log('chat flag 18:', e.extras['18']);
+});
+```
 
 ### Catch-all
 

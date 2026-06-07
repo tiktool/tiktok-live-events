@@ -4,7 +4,7 @@
 
 **The 2026 TikTok LIVE event stream. Node.js + Python.**
 
-Read chat, gifts, viewers, follows, PK battles, native captions, moderation deletes and **50+ real-time event types** from any TikTok LIVE stream.
+Read chat, gifts, viewers, follows, PK battles, AI captions, polls, karaoke, pictionary, live shopping, moderation deletes and **80+ real-time event types** from any TikTok LIVE stream.
 
 </div>
 
