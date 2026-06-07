@@ -28,9 +28,35 @@ Both SDKs use the same backend. Pick the language that matches your stack.
 
 ---
 
-## Quick start
+## Three ways to use it
 
-### Node.js
+### 1. One-click (Windows)
+
+Download [`start.bat`](start.bat), double-click. Installs the package + prompts for a username. Streams every chat, gift, like, follow to the console.
+
+### 2. One-click (macOS / Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tiktool/tiktok-live-events/main/start.sh | bash
+```
+
+### 3. CLI
+
+```bash
+npm i -g tiktok-live-events     # or:  pip install tiktok-live-events
+tiktok-live-events streamer
+```
+
+```text
+[ready]   connected to @streamer (room 7648...)
+[chat]    fan123: love this!
+[gift]    bigtipper -> Rose x99
+[like]    casual_viewer (15)
+```
+
+### 4. Programmatic
+
+#### Node.js
 
 ```bash
 npm install tiktok-live-events
@@ -44,7 +70,7 @@ live.on('chat', e => console.log(`${e.user.uniqueId}: ${e.comment}`));
 await live.connect();
 ```
 
-### Python
+#### Python
 
 ```bash
 pip install tiktok-live-events
