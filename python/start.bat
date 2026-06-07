@@ -9,15 +9,10 @@ if errorlevel 1 (
     exit /b 1
 )
 
-where tiktok-live-events >nul 2>&1
+echo [events] Updating tiktok-live-events...
+call python -m pip install --user --upgrade tiktok-live-events >nul 2>&1
 if errorlevel 1 (
-    echo [events] Installing tiktok-live-events...
-    call python -m pip install --user --upgrade tiktok-live-events
-    if errorlevel 1 (
-        echo [events] pip install failed.
-        pause
-        exit /b 1
-    )
+    echo [events] pip install failed. Continuing with existing install if present.
 )
 
 set /p TTUSER=Enter the TikTok username (without @):
