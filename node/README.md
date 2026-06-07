@@ -69,19 +69,40 @@ The protocol decode happens on the [TikTools](https://tik.tools) edge. Your code
 
 ---
 
-## How it works (free / anon / paid)
+## How it works (free / sandbox / paid)
 
-You open ONE WebSocket to `wss://api.tik.tools`. The TikTools edge owns the upstream TikTok session, decodes every frame server-side, and forwards typed JSON events back to your socket in real-time. Your machine never talks to TikTok directly - the SDK has zero protocol code, no proxy setup, no headless browser.
+The SDK has two connect strategies and picks one automatically based on your tier.
 
-| Mode | API key? | What you get | When to use |
-|---|---|---|---|
-| **Anonymous** | No key. Just `new TikTokLive('streamer')`. | All 80+ event types, capped per-IP (a handful of connects/hour, sessions up to 10 min). | Hello-world demos, scripts that watch one stream now and then. |
-| **Free key** | Free signup at [tik.tools](https://tik.tools) - no card. | Lifted per-IP caps, longer sessions, REST + WS quota. | Bots, OBS overlays, analytics that need to stay connected. |
-| **Paid tiers** | Same key, upgraded tier. | More concurrent sockets, higher request quota, full agency intel layer. | Production at scale. |
+### Direct mode (default for free + sandbox)
 
-When the anonymous cap is reached, the SDK emits a `rateLimited` event and stops reconnecting until you supply a key. The CLI prompts for one interactively. Everything else stays identical across tiers - the only thing that changes is the cap.
+Your machine opens the WebSocket to TikTok **from your own IP**. Our edge only:
 
-Pricing tiers and current limits live on the [pricing page](https://tik.tools/pricing) (single source of truth, geo-aware).
+1. Signs the URL + mints you a fresh session cookie.
+2. Receives raw frames over a side channel and returns parsed JSON.
+
+You never run a protobuf library, you never set up a proxy, you never run a headless browser. But TikTok sees your real residential IP - geo is correct, your fingerprint is organic, and you don't share our session pool. Captcha + cluster-ban risk lands on your IP.
+
+### Managed mode (default for paid tiers)
+
+You open ONE WebSocket to `wss://api.tik.tools`. Our edge runs the upstream TikTok session via our residential proxy pool. Your IP never touches TikTok. Fan-out economics: many customers watching the same creator share one upstream connection.
+
+### Picking mode
+
+| Tier | Default mode | Override |
+|---|---|---|
+| **Anonymous** (no key) | `direct` | `{ mode: 'managed' }` |
+| **Sandbox** (free signup) | `direct` | `{ mode: 'managed' }` |
+| **Basic+** (paid) | `managed` | `{ mode: 'direct' }` |
+
+The default is `mode: 'auto'` - the SDK asks our edge which mode fits your tier and picks the right one. Force a mode explicitly when you want to override.
+
+```ts
+const live = new TikTokLive('streamer', { apiKey: '...', mode: 'direct' }); // force direct
+const live = new TikTokLive('streamer', { apiKey: '...', mode: 'managed' }); // force managed
+const live = new TikTokLive('streamer');                                     // auto (default)
+```
+
+Pricing tiers + current per-mode caps live on the [pricing page](https://tik.tools/pricing).
 
 ---
 

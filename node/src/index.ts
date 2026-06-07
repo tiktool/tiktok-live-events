@@ -15,6 +15,7 @@ import { EventEmitter } from 'events';
 import WebSocket from 'ws';
 
 const ENDPOINT = 'wss://api.tik.tools';
+const HTTPS_ENDPOINT = 'https://api.tik.tools';
 
 // ── Public event payload shapes ────────────────────────────────────
 
@@ -254,6 +255,20 @@ export interface TikTokLiveOptions {
     maxReconnectAttempts?: number;
     /** Verbose stdout logging (default: false). */
     debug?: boolean;
+    /**
+     * Connection mode.
+     *
+     * - `auto` (default) - SDK asks the edge which mode to use based on tier:
+     *   anon / demo / sandbox tiers connect to TikTok from your own IP (the
+     *   edge only signs + decodes - it does NOT relay your traffic). Paid tiers
+     *   stay on the managed path for fan-out economics.
+     * - `managed` - explicitly use the edge as a relay. One WebSocket. The edge
+     *   talks to TikTok via its own upstream session. Your IP never touches
+     *   TikTok. Paid-tier default.
+     * - `direct` - explicitly open two WebSockets: TikTok (your IP) + edge
+     *   decode. Free-tier default. Bypasses the relay entirely.
+     */
+    mode?: 'auto' | 'managed' | 'direct';
 }
 
 /**
@@ -284,6 +299,8 @@ export class TikTokLive extends EventEmitter {
     private readonly autoReconnect: boolean;
     private readonly maxReconnectAttempts: number;
     private readonly debug: boolean;
+    private readonly mode: 'auto' | 'managed' | 'direct';
+    private directState: { ttws: WebSocket | null; decws: WebSocket | null; heartbeat: NodeJS.Timeout | null } | null = null;
 
     /**
      * @param uniqueId TikTok @username (with or without the leading `@`).
@@ -298,6 +315,7 @@ export class TikTokLive extends EventEmitter {
         this.autoReconnect = options.autoReconnect ?? true;
         this.maxReconnectAttempts = options.maxReconnectAttempts ?? 5;
         this.debug = options.debug ?? false;
+        this.mode = options.mode || 'auto';
     }
 
     /** True between `open` and `close`. */
@@ -310,6 +328,27 @@ export class TikTokLive extends EventEmitter {
     async connect(): Promise<void> {
         if (this._destroyed) throw new Error('Client destroyed. Construct a new instance.');
         this.intentionalClose = false;
+
+        let effective: 'managed' | 'direct' = this.mode === 'managed' || this.mode === 'direct' ? this.mode : 'managed';
+        if (this.mode === 'auto') {
+            // Ask the edge which mode fits this caller's tier. anon/sandbox/demo
+            // get routed to direct (their IP -> TikTok, edge only signs + decodes).
+            try {
+                const headers: Record<string, string> = { 'content-type': 'application/json' };
+                if (this.apiKey) headers['x-api-key'] = this.apiKey;
+                const r = await fetch(`${HTTPS_ENDPOINT}/webcast/connection_mode`, { method: 'POST', headers, body: '{}' });
+                if (this.debug) console.log('[tiktok-live-events] connection_mode status:', r.status);
+                if (r.ok) {
+                    const body = await r.json() as any;
+                    if (this.debug) console.log('[tiktok-live-events] connection_mode body:', JSON.stringify(body));
+                    if (body?.data?.recommended_mode === 'direct') effective = 'direct';
+                }
+            } catch (e: any) {
+                if (this.debug) console.log('[tiktok-live-events] connection_mode error:', e?.message);
+            }
+        }
+        if (this.debug) console.log(`[tiktok-live-events] mode=${effective}`);
+        if (effective === 'direct') return this.connectDirect();
 
         const params = new URLSearchParams({ uniqueId: this.uniqueId });
         if (this.apiKey) params.set('apiKey', this.apiKey);
@@ -391,7 +430,139 @@ export class TikTokLive extends EventEmitter {
     disconnect(): void {
         this.intentionalClose = true;
         if (this.ws) { try { this.ws.close(1000, 'client disconnect'); } catch {} this.ws = null; }
+        if (this.directState) {
+            const s = this.directState;
+            if (s.heartbeat) { clearInterval(s.heartbeat); s.heartbeat = null; }
+            if (s.ttws) { try { s.ttws.close(1000); } catch {} s.ttws = null; }
+            if (s.decws) { try { s.decws.close(1000); } catch {} s.decws = null; }
+            this.directState = null;
+        }
         this._connected = false;
+    }
+
+    /**
+     * Direct-mode connect. Two WebSockets: one to TikTok (your IP), one to our
+     * /decode endpoint. We hand back the signed wss URL + ttwid + binary
+     * heartbeat frames; the SDK pumps raw bytes from TikTok into /decode and
+     * emits the JSON events that come back.
+     */
+    private async connectDirect(): Promise<void> {
+        const headers: Record<string, string> = { 'content-type': 'application/json' };
+        if (this.apiKey) headers['x-api-key'] = this.apiKey;
+
+        // Step 1: resolve unique_id -> room_id via the public live_status
+        // endpoint (anon allowed).
+        const statusRes = await fetch(`${HTTPS_ENDPOINT}/webcast/live_status`, {
+            method: 'POST', headers, body: JSON.stringify({ unique_id: this.uniqueId }),
+        });
+        if (statusRes.status === 429) {
+            const body = await statusRes.json().catch(() => null) as any;
+            this.rateLimitTerminal = true;
+            this.emit('rateLimited', { type: 'anon_limit', message: body?.error || 'rate limited' });
+            throw new Error(body?.error || 'rate limited');
+        }
+        if (!statusRes.ok) throw new Error(`live_status failed: HTTP ${statusRes.status}`);
+        const statusBody = await statusRes.json() as any;
+        const roomId = statusBody?.data?.room_id;
+        const isLive = !!statusBody?.data?.is_live;
+        if (!roomId) throw new Error('could not resolve room_id for ' + this.uniqueId);
+        if (!isLive) throw new Error('@' + this.uniqueId + ' is not currently live');
+
+        // Step 2: get signed wss URL + cookies + heartbeat frames.
+        const credsRes = await fetch(`${HTTPS_ENDPOINT}/webcast/ws_credentials`, {
+            method: 'POST', headers, body: JSON.stringify({ unique_id: this.uniqueId, room_id: roomId }),
+        });
+        if (credsRes.status === 429) {
+            const body = await credsRes.json().catch(() => null) as any;
+            this.rateLimitTerminal = true;
+            this.emit('rateLimited', { type: 'anon_limit', message: body?.error || 'rate limited' });
+            throw new Error(body?.error || 'rate limited');
+        }
+        if (!credsRes.ok) throw new Error(`ws_credentials failed: HTTP ${credsRes.status}`);
+        const creds = await credsRes.json() as any;
+        const data = creds?.data;
+        if (!data?.ws_url) throw new Error('no ws_url in credentials response');
+
+        const ttUrl: string = data.ws_url;
+        const cookies: string = data.cookies || '';
+        const userAgent: string = data.user_agent || 'Mozilla/5.0';
+        const imEnterB64: string | undefined = data.binary_frames?.im_enter_room_b64;
+        const heartbeatB64: string | undefined = data.binary_frames?.heartbeat_b64;
+
+        const decParams = new URLSearchParams();
+        if (this.apiKey) decParams.set('apiKey', this.apiKey);
+        const decUrl = `${ENDPOINT}/decode?${decParams.toString()}`;
+
+        // Open both sockets in parallel.
+        const ttws = new WebSocket(ttUrl, { headers: { Cookie: cookies, 'User-Agent': userAgent, Origin: 'https://www.tiktok.com' } });
+        const decws = new WebSocket(decUrl);
+        this.directState = { ttws, decws, heartbeat: null };
+
+        let resolvedRoomInfo = false;
+        return new Promise<void>((resolveP, rejectP) => {
+            let ttOpen = false, decOpen = false;
+            const checkReady = () => {
+                if (ttOpen && decOpen) {
+                    this._connected = true;
+                    this.emit('connected');
+                    // Send the im_enter_room first frame so TikTok starts shipping events.
+                    if (imEnterB64) { try { ttws.send(Buffer.from(imEnterB64, 'base64')); } catch {} }
+                    // Heartbeat every 10s
+                    if (heartbeatB64) {
+                        this.directState!.heartbeat = setInterval(() => {
+                            try { ttws.send(Buffer.from(heartbeatB64, 'base64')); } catch {}
+                        }, 10_000);
+                    }
+                    if (!resolvedRoomInfo) {
+                        resolvedRoomInfo = true;
+                        this.emit('roomInfo', { roomId: data.room_id, wsHost: data.ws_host, clusterRegion: data.cluster_region, connectedAt: new Date().toISOString() });
+                        resolveP();
+                    }
+                }
+            };
+            ttws.on('open', () => { ttOpen = true; checkReady(); });
+            decws.on('open', () => { decOpen = true; checkReady(); });
+
+            // Forward every TikTok binary frame into /decode for parsing.
+            ttws.on('message', (raw: Buffer, isBinary: boolean) => {
+                if (!isBinary || !decws || decws.readyState !== WebSocket.OPEN) return;
+                try { decws.send(raw); } catch {}
+            });
+
+            // Each /decode response carries an `events` array of typed events.
+            decws.on('message', (raw: Buffer) => {
+                try {
+                    const msg = JSON.parse(raw.toString());
+                    if (msg?.error) {
+                        if (msg.type === 'rate_limited') {
+                            this.rateLimitTerminal = true;
+                            this.emit('rateLimited', { type: 'decode_limit', message: msg.error });
+                        }
+                        return;
+                    }
+                    if (msg?.events && Array.isArray(msg.events)) {
+                        for (const ev of msg.events) {
+                            const evName: string | undefined = (ev as any)?.type;
+                            if (evName) (this as any).emit(evName, ev);
+                            (this as any).emit('event', ev);
+                        }
+                    }
+                } catch {}
+            });
+
+            const onClose = (code: number, reason: Buffer) => {
+                this._connected = false;
+                const r = reason?.toString() || '';
+                this.emit('disconnected', code, r);
+                if (this.directState?.heartbeat) { clearInterval(this.directState.heartbeat); this.directState.heartbeat = null; }
+                try { ttws.terminate(); } catch {}
+                try { decws.terminate(); } catch {}
+            };
+            ttws.on('close', onClose);
+            decws.on('close', onClose);
+            ttws.on('error', (err) => { if (!ttOpen) rejectP(err); else this.emit('error', err); });
+            decws.on('error', (err) => { if (!decOpen) rejectP(err); else this.emit('error', err); });
+        });
     }
 
     /** Tear down. Subsequent connects throw. */
