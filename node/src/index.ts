@@ -207,11 +207,25 @@ export type LiveEvent =
     | CaptionEvent | ImDeleteEvent | LinkMicOpponentGiftEvent | GoalUpdateEvent
     | RoomPinEvent | UnknownEvent;
 
+/**
+ * Fired when the edge issues a soft rate-limit nudge BEFORE closing the
+ * socket. Inspect `type` (`anon_limit` / `demo_limit` / `session_limit`),
+ * `message`, and `upgrade_url`. If you don't subscribe, the SDK prints
+ * the message to stderr.
+ */
+export interface RateLimitedNudge {
+    type: 'anon_limit' | 'demo_limit' | 'session_limit';
+    message: string;
+    upgrade_url?: string;
+    sessionMaxMs?: number;
+}
+
 /** Strongly-typed event map for `client.on(...)` autocompletion. */
 export interface TikTokLiveEvents {
     connected: () => void;
     disconnected: (code: number, reason: string) => void;
     error: (err: Error) => void;
+    rateLimited: (nudge: RateLimitedNudge) => void;
     roomInfo: (info: RoomInfo) => void;
     chat: (e: ChatEvent) => void;
     gift: (e: GiftEvent) => void;
@@ -286,12 +300,9 @@ export class TikTokLive extends EventEmitter {
         this.setMaxListeners(20);
         this.uniqueId = (uniqueId || '').replace(/^@/, '').trim();
         if (!this.uniqueId) throw new Error('uniqueId is required.');
+        // Anonymous mode is supported. Drop in a free key (from
+        // https://tik.tools) to lift the per-IP caps when you hit them.
         this.apiKey = options.apiKey || process.env.TIKTOOL_API_KEY || '';
-        if (!this.apiKey) {
-            throw new Error(
-                'Missing API key. Grab a free one in ~10s at https://tik.tools, then pass it as `new TikTokLive("user", { apiKey: "..." })` or set the TIKTOOL_API_KEY environment variable.'
-            );
-        }
         this.autoReconnect = options.autoReconnect ?? true;
         this.maxReconnectAttempts = options.maxReconnectAttempts ?? 5;
         this.debug = options.debug ?? false;
@@ -308,9 +319,10 @@ export class TikTokLive extends EventEmitter {
         if (this._destroyed) throw new Error('Client destroyed. Construct a new instance.');
         this.intentionalClose = false;
 
-        const params = new URLSearchParams({ uniqueId: this.uniqueId, apiKey: this.apiKey });
+        const params = new URLSearchParams({ uniqueId: this.uniqueId });
+        if (this.apiKey) params.set('apiKey', this.apiKey);
         const wsUrl = `${ENDPOINT}/?${params.toString()}`;
-        if (this.debug) console.log(`[tiktok-live-events] connecting -> ${wsUrl.replace(this.apiKey, '***')}`);
+        if (this.debug) console.log(`[tiktok-live-events] connecting -> ${this.apiKey ? wsUrl.replace(this.apiKey, '***') : wsUrl}`);
 
         return new Promise<void>((resolve, reject) => {
             this.ws = new WebSocket(wsUrl);
@@ -327,6 +339,17 @@ export class TikTokLive extends EventEmitter {
                 let msg: any;
                 try { msg = JSON.parse(raw.toString()); } catch { return; }
                 if (!msg || typeof msg !== 'object') return;
+                // The edge ships an `anon_limit` JSON nudge BEFORE closing
+                // the socket. Emit a `rateLimited` event so consumers can
+                // render their own banner; fallback to console.warn so
+                // non-listeners still see the upgrade hint.
+                if (msg.type === 'anon_limit' || msg.type === 'demo_limit' || msg.type === 'session_limit') {
+                    (this as any).emit('rateLimited', msg);
+                    if (this.listenerCount('rateLimited') === 0) {
+                        console.warn(`[tiktok-live-events] ${msg.message || 'rate limit reached.'} ${msg.upgrade_url ? `(see ${msg.upgrade_url})` : ''}`);
+                    }
+                    return;
+                }
                 const evName: string | undefined = msg.event;
                 if (!evName || evName === '_journal' || evName === 'ping' || evName === 'pong') return;
                 const evData = msg.data ?? msg;

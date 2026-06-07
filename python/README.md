@@ -46,13 +46,9 @@ pipx install tiktok-live-events
 
 ```python
 import asyncio
-import os
 from tiktok_live_events import TikTokLive
 
-live = TikTokLive(
-    "streamer_username",
-    api_key=os.environ["TIKTOOL_API_KEY"],  # grab one in 10s at https://tik.tools
-)
+live = TikTokLive("streamer_username")
 
 @live.on("connected")
 def on_connected(_):
@@ -73,7 +69,7 @@ def on_like(e):
 asyncio.run(live.run())
 ```
 
-Grab a free API key in ~10 seconds at <https://tik.tools> (no credit card). The SDK reads it from the constructor or the `TIKTOOL_API_KEY` env var.
+No key, no config, no signup. Pass `api_key=` (or set `TIKTOOL_API_KEY`) to lift the per-IP caps when you hit them - free at <https://tik.tools>.
 
 ---
 

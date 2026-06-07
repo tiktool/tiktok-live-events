@@ -56,13 +56,9 @@ class TikTokLive:
         self.unique_id = (unique_id or "").lstrip("@").strip()
         if not self.unique_id:
             raise ValueError("unique_id is required.")
+        # Anonymous mode is supported. Drop in a free key from
+        # https://tik.tools to lift the per-IP caps when you hit them.
         self.api_key = (api_key or os.environ.get("TIKTOOL_API_KEY") or "").strip()
-        if not self.api_key:
-            raise ValueError(
-                "Missing API key. Grab a free one in ~10s at https://tik.tools, then "
-                "pass it as TikTokLive('user', api_key='...') or set the TIKTOOL_API_KEY "
-                "environment variable."
-            )
         self.auto_reconnect = auto_reconnect
         self.max_reconnect_attempts = max_reconnect_attempts
         self.debug = debug
@@ -114,9 +110,11 @@ class TikTokLive:
         """Connect and pump events until :meth:`stop` is called or the
         reconnect budget is exhausted.
         """
-        url = f"{ENDPOINT}/?uniqueId={quote(self.unique_id)}&apiKey={quote(self.api_key)}"
-        masked = url.replace(self.api_key, "***")
+        url = f"{ENDPOINT}/?uniqueId={quote(self.unique_id)}"
+        if self.api_key:
+            url += f"&apiKey={quote(self.api_key)}"
         if self.debug:
+            masked = url.replace(self.api_key, "***") if self.api_key else url
             logger.info("[tiktok-live-events] connecting -> %s", masked)
 
         while not self._stop.is_set():
@@ -134,6 +132,18 @@ class TikTokLive:
                         except json.JSONDecodeError:
                             continue
                         if not isinstance(msg, dict):
+                            continue
+                        # Edge ships an `anon_limit` / `demo_limit` /
+                        # `session_limit` JSON nudge BEFORE closing. Surface
+                        # it as a `rate_limited` event and (if no handler is
+                        # registered) print the upgrade hint to stderr.
+                        nudge_type = msg.get("type")
+                        if nudge_type in ("anon_limit", "demo_limit", "session_limit"):
+                            await self._dispatch("rate_limited", msg)
+                            if not self._handlers.get("rate_limited"):
+                                hint = msg.get("message") or "rate limit reached."
+                                url = msg.get("upgrade_url") or ""
+                                logger.warning("[tiktok-live-events] %s %s", hint, f"(see {url})" if url else "")
                             continue
                         ev = msg.get("event")
                         if not ev or ev in ("_journal", "ping", "pong"):

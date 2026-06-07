@@ -47,9 +47,7 @@ bun   add tiktok-live-events
 ```ts
 import { TikTokLive } from 'tiktok-live-events';
 
-const live = new TikTokLive('streamer_username', {
-    apiKey: process.env.TIKTOOL_API_KEY, // grab one in 10s at https://tik.tools
-});
+const live = new TikTokLive('streamer_username');
 
 live.on('connected', () => console.log('Connected.'));
 live.on('roomInfo', (info) => console.log(`Watching ${info.roomId}`));
@@ -62,7 +60,7 @@ live.on('member', (e) => console.log(`${e.user.uniqueId} joined`));
 await live.connect();
 ```
 
-Grab a free API key in ~10 seconds at <https://tik.tools> (no credit card). The SDK reads it from the constructor or the `TIKTOOL_API_KEY` env var.
+No key, no config, no signup. Pass `apiKey` (or set `TIKTOOL_API_KEY`) to lift the per-IP caps when you hit them - free at <https://tik.tools>.
 
 ---
 
