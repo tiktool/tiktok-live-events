@@ -5,10 +5,36 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
 import sys
+from pathlib import Path
 from typing import Any, Optional
 
 from .client import TikTokLive
+
+CONFIG_DIR = Path.home() / ".tiktok-live-events"
+KEY_FILE = CONFIG_DIR / "api-key"
+
+
+def _load_stored_key() -> str:
+    try:
+        if KEY_FILE.exists():
+            return KEY_FILE.read_text(encoding="utf-8").strip()
+    except Exception:
+        pass
+    return ""
+
+
+def _save_key(key: str) -> None:
+    try:
+        CONFIG_DIR.mkdir(parents=True, exist_ok=True, mode=0o700)
+        KEY_FILE.write_text(key, encoding="utf-8")
+        try:
+            os.chmod(KEY_FILE, 0o600)
+        except Exception:
+            pass
+    except Exception:
+        pass
 
 
 def _parse_args(argv: Optional[list[str]]) -> argparse.Namespace:
@@ -93,7 +119,11 @@ async def _run_once(username: str, api_key: str, args: argparse.Namespace) -> tu
 
 async def _run(args: argparse.Namespace) -> int:
     username = args.username.lstrip("@").strip()
-    api_key = args.api_key or ""
+    api_key = args.api_key or _load_stored_key() or ""
+    if api_key and not args.api_key and not args.emit_json:
+        print(f"[events] using stored API key from {KEY_FILE}")
+    if args.api_key:
+        _save_key(args.api_key)
 
     while True:
         try:
@@ -112,6 +142,9 @@ async def _run(args: argparse.Namespace) -> int:
             print("[events] no key entered. Exiting.")
             return 0
         api_key = new_key
+        _save_key(new_key)
+        if not args.emit_json:
+            print(f"[events] API key saved to {KEY_FILE}")
 
 
 def main(argv: Optional[list[str]] = None) -> int:

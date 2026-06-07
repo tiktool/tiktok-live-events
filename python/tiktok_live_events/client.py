@@ -298,7 +298,7 @@ class TikTokLive:
                         await tt_ws.send(base64.b64decode(heartbeat_b64))
                     except Exception:
                         return
-            except asyncio.CancelledError:
+            except (asyncio.CancelledError, Exception):
                 return
 
         async def pump_tt_to_dec(tt_ws, dec_ws):
@@ -309,7 +309,7 @@ class TikTokLive:
                             await dec_ws.send(raw)
                         except Exception:
                             return
-            except asyncio.CancelledError:
+            except (asyncio.CancelledError, Exception):
                 return
 
         async def pump_dec_to_emit(dec_ws):
@@ -337,7 +337,7 @@ class TikTokLive:
                             if evt:
                                 await self._dispatch(evt, ev)
                             await self._dispatch("event", ev)
-            except asyncio.CancelledError:
+            except (asyncio.CancelledError, Exception):
                 return
 
         try:

@@ -7,6 +7,26 @@
  */
 import { TikTokLive } from './index.js';
 import * as readline from 'readline';
+import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { homedir } from 'os';
+import { join } from 'path';
+
+const CONFIG_DIR = join(homedir(), '.tiktok-live-events');
+const KEY_FILE = join(CONFIG_DIR, 'api-key');
+
+function loadStoredKey(): string {
+    try {
+        if (existsSync(KEY_FILE)) return readFileSync(KEY_FILE, 'utf-8').trim();
+    } catch { }
+    return '';
+}
+
+function saveKey(key: string): void {
+    try {
+        if (!existsSync(CONFIG_DIR)) mkdirSync(CONFIG_DIR, { recursive: true, mode: 0o700 });
+        writeFileSync(KEY_FILE, key, { mode: 0o600 });
+    } catch { }
+}
 
 interface Args {
     username?: string;
@@ -80,7 +100,11 @@ function promptKey(message: string): Promise<string> {
 }
 
 async function connectLoop(username: string, args: Args): Promise<void> {
-    let apiKey = args.apiKey || process.env.TIKTOOL_API_KEY || '';
+    let apiKey = args.apiKey || process.env.TIKTOOL_API_KEY || loadStoredKey();
+    if (apiKey && !args.apiKey && !args.json) {
+        console.log(`[events] using stored API key from ${KEY_FILE}`);
+    }
+    if (args.apiKey) saveKey(args.apiKey);
 
     while (true) {
         if (!args.json) console.log(`[events] connecting to @${username} ...`);
@@ -140,6 +164,8 @@ async function connectLoop(username: string, args: Args): Promise<void> {
             return;
         }
         apiKey = newKey;
+        saveKey(newKey);
+        if (!args.json) console.log(`[events] API key saved to ${KEY_FILE}`);
         // Loop again with the new key.
     }
 }
