@@ -339,6 +339,10 @@ export class TikTokLive extends EventEmitter {
                     if (this.listenerCount('rateLimited') === 0) {
                         console.warn(`[tiktok-live-events] ${msg.message || 'rate limit reached.'} ${msg.upgrade_url ? `(see ${msg.upgrade_url})` : ''}`);
                     }
+                    // Treat as terminal: server will close socket after this
+                    // nudge. Reconnecting would just hit the same cap and
+                    // spam the console. Caller must back off or pass apiKey.
+                    this.intentionalClose = true;
                     return;
                 }
                 const evName: string | undefined = msg.event;

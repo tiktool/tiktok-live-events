@@ -144,6 +144,9 @@ class TikTokLive:
                                 hint = msg.get("message") or "rate limit reached."
                                 url = msg.get("upgrade_url") or ""
                                 logger.warning("[tiktok-live-events] %s %s", hint, f"(see {url})" if url else "")
+                            # Terminal: server closes after this nudge.
+                            # Reconnecting just hits the same cap.
+                            self._stop.set()
                             continue
                         ev = msg.get("event")
                         if not ev or ev in ("_journal", "ping", "pong"):

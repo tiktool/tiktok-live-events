@@ -71,6 +71,11 @@ async def _run(args: argparse.Namespace) -> int:
     def _err(e):  # noqa: ANN001
         print(_fmt("error", e), file=sys.stderr)
 
+    @live.on("rate_limited")
+    def _rl(e):  # noqa: ANN001
+        msg = e.get("message") or "rate limit reached."
+        print(f"[limit]   {msg}", file=sys.stderr)
+
     try:
         await live.run()
     except KeyboardInterrupt:
