@@ -15,6 +15,52 @@ Read chat, gifts, viewers, follows, PK battles, native captions, moderation dele
 
 ---
 
+## Three ways to use it
+
+### 1. One-click (Windows)
+
+Download [`start.bat`](start.bat), double-click. It installs the package + prompts for a username. Streams every chat, gift, like, follow in real-time to the console.
+
+### 2. One-click (macOS / Linux)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tiktool/tiktok-live-events/main/python/start.sh | bash
+```
+
+### 3. CLI
+
+```bash
+pip install tiktok-live-events
+tiktok-live-events streamer_username
+```
+
+```text
+[ready]   connected to @streamer (room 7648...)
+[chat]    fan123: love this!
+[gift]    bigtipper -> Rose x99
+[like]    casual_viewer (15)
+[follow]  new_follower
+```
+
+### 4. Programmatic
+
+```python
+import asyncio
+from tiktok_live_events import TikTokLive
+
+live = TikTokLive("streamer_username")
+
+@live.on("chat")
+def on_chat(e):
+    print(f"{e['user']['uniqueId']}: {e['comment']}")
+
+asyncio.run(live.run())
+```
+
+No key. No config. Just run it.
+
+---
+
 ## What you get
 
 - Real-time **chat, gifts, likes, follows, viewer counts, PK battles, AI captions, gift catalog updates, moderation deletes, viewer entry-source analytics** and 50+ other live event types.
@@ -24,6 +70,25 @@ Read chat, gifts, viewers, follows, PK battles, native captions, moderation dele
 - **Tiny.** One runtime dependency (`websockets`).
 
 The protocol decode happens on the [TikTools](https://tik.tools) edge. Your code only ever sees clean JSON.
+
+---
+
+## CLI reference
+
+```text
+tiktok-live-events <username> [options]
+
+Options:
+  -f, --filter <list>     Comma-separated event types (default: all)
+                          e.g. chat,gift,follow,viewer,like
+      --json              Emit each event as one JSON line (machine-readable)
+  -h, --help              Show this help
+
+Examples:
+  tiktok-live-events streamer
+  tiktok-live-events streamer --filter chat,gift
+  tiktok-live-events streamer --json > events.ndjson
+```
 
 ---
 
@@ -42,7 +107,7 @@ pipx install tiktok-live-events
 
 ---
 
-## Quick start
+## Quick start (SDK)
 
 ```python
 import asyncio
@@ -68,8 +133,6 @@ def on_like(e):
 
 asyncio.run(live.run())
 ```
-
-No key. No config. Just run it.
 
 ---
 
