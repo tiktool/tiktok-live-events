@@ -60,7 +60,7 @@ live.on('member', (e) => console.log(`${e.user.uniqueId} joined`));
 await live.connect();
 ```
 
-No key, no config, no signup. Pass `apiKey` (or set `TIKTOOL_API_KEY`) to lift the per-IP caps when you hit them - free at <https://tik.tools>.
+No key. No config. Just run it.
 
 ---
 

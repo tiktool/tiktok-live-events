@@ -15,7 +15,7 @@ Read chat, gifts, viewers, follows, PK battles, native captions, moderation dele
 - **Node.js + TypeScript** → [`node/`](node/) ([npm: `tiktok-live-events`](https://www.npmjs.com/package/tiktok-live-events))
 - **Python** → [`python/`](python/) ([PyPI: `tiktok-live-events`](https://pypi.org/project/tiktok-live-events/))
 
-Each SDK uses the same managed edge (`wss://api.tik.tools`) so events look identical regardless of language. Pick the language that matches your stack.
+Both SDKs use the same backend. Pick the language that matches your stack.
 
 ---
 
@@ -25,8 +25,6 @@ Each SDK uses the same managed edge (`wss://api.tik.tools`) so events look ident
 - One WebSocket. Zero protocol code. No protobuf libraries. No proxy setup. No headless browser.
 - Full type annotations - TypeScript interfaces in Node, TypedDict in Python.
 - Auto-reconnect, structured error handling.
-
-The protocol decode happens on the [TikTools](https://tik.tools) edge. Your code only ever sees clean JSON.
 
 ---
 
@@ -41,7 +39,7 @@ npm install tiktok-live-events
 ```ts
 import { TikTokLive } from 'tiktok-live-events';
 
-const live = new TikTokLive('streamer', { apiKey: process.env.TIKTOOL_API_KEY });
+const live = new TikTokLive('streamer');
 live.on('chat', e => console.log(`${e.user.uniqueId}: ${e.comment}`));
 await live.connect();
 ```
@@ -54,10 +52,9 @@ pip install tiktok-live-events
 
 ```python
 import asyncio
-import os
 from tiktok_live_events import TikTokLive
 
-live = TikTokLive('streamer', api_key=os.environ['TIKTOOL_API_KEY'])
+live = TikTokLive('streamer')
 
 @live.on('chat')
 def on_chat(e):
@@ -66,7 +63,7 @@ def on_chat(e):
 asyncio.run(live.run())
 ```
 
-Grab a free API key at <https://tik.tools> (no credit card, ~10 seconds).
+No key. No config. Just run it.
 
 ---
 

@@ -246,11 +246,7 @@ export interface TikTokLiveEvents {
 }
 
 export interface TikTokLiveOptions {
-    /**
-     * Your free TikTools API key. Grab one in ~10 seconds at
-     * https://tik.tools (no credit card). Can also be passed via the
-     * `TIKTOOL_API_KEY` environment variable.
-     */
+    /** Optional API key. Anonymous mode works out of the box. */
     apiKey?: string;
     /** Auto-reconnect when the socket drops (default: true). */
     autoReconnect?: boolean;
@@ -290,18 +286,13 @@ export class TikTokLive extends EventEmitter {
 
     /**
      * @param uniqueId TikTok @username (with or without the leading `@`).
-     * @param options optional behaviour overrides. `apiKey` is your free
-     *   TikTools key (grab one at https://tik.tools - takes ~10 seconds,
-     *   no credit card). You can also set the `TIKTOOL_API_KEY`
-     *   environment variable instead of passing it here.
+     * @param options optional behaviour overrides.
      */
     constructor(uniqueId: string, options: TikTokLiveOptions = {}) {
         super();
         this.setMaxListeners(20);
         this.uniqueId = (uniqueId || '').replace(/^@/, '').trim();
         if (!this.uniqueId) throw new Error('uniqueId is required.');
-        // Anonymous mode is supported. Drop in a free key (from
-        // https://tik.tools) to lift the per-IP caps when you hit them.
         this.apiKey = options.apiKey || process.env.TIKTOOL_API_KEY || '';
         this.autoReconnect = options.autoReconnect ?? true;
         this.maxReconnectAttempts = options.maxReconnectAttempts ?? 5;
