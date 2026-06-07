@@ -367,8 +367,19 @@ class TikTokLive:
                     asyncio.create_task(self._stop.wait()),
                 ]
                 done, pending = await asyncio.wait(tasks, return_when=asyncio.FIRST_COMPLETED)
+                # Retrieve completed-task results so asyncio does not log
+                # "Task exception was never retrieved" on ConnectionClosedError /
+                # other shutdown-time exceptions.
+                for t in done:
+                    try:
+                        _ = t.exception()
+                    except (asyncio.CancelledError, asyncio.InvalidStateError):
+                        pass
                 for t in pending:
                     t.cancel()
+                # Await cancellation so their exceptions are also retrieved.
+                if pending:
+                    await asyncio.gather(*pending, return_exceptions=True)
         except Exception as exc:
             await self._dispatch("error", {"error": str(exc)})
         finally:
