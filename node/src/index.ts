@@ -274,6 +274,7 @@ export interface TikTokLiveOptions {
 export class TikTokLive extends EventEmitter {
     private ws: WebSocket | null = null;
     private intentionalClose = false;
+    private rateLimitTerminal = false;
     private reconnectAttempts = 0;
     private _connected = false;
     private _destroyed = false;
@@ -339,9 +340,9 @@ export class TikTokLive extends EventEmitter {
                     if (this.listenerCount('rateLimited') === 0) {
                         console.warn(`[tiktok-live-events] ${msg.message || 'rate limit reached.'} ${msg.upgrade_url ? `(see ${msg.upgrade_url})` : ''}`);
                     }
-                    // Treat as terminal: server will close socket after this
-                    // nudge. Reconnecting would just hit the same cap and
-                    // spam the console. Caller must back off or pass apiKey.
+                    // Terminal: server closes socket after this nudge.
+                    // Reconnect would slam same cap. Caller must back off.
+                    this.rateLimitTerminal = true;
                     this.intentionalClose = true;
                     return;
                 }
@@ -371,7 +372,7 @@ export class TikTokLive extends EventEmitter {
                     reject(new Error(`Connection refused (code ${code}): ${reasonStr || 'no reason'}`));
                     return;
                 }
-                if (!this.intentionalClose && this.autoReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+                if (!this.intentionalClose && !this.rateLimitTerminal && this.autoReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
                     this.reconnectAttempts++;
                     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30_000);
                     if (this.debug) console.log(`[tiktok-live-events] reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
