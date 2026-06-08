@@ -11,7 +11,7 @@ if ! command -v "$PY" >/dev/null 2>&1; then
 fi
 
 echo "[events] Updating tiktok-live-events..."
-"$PY" -m pip install --user --upgrade tiktok-live-events >/dev/null 2>&1 || echo "[events] pip install failed - using existing if present"
+"$PY" -m pip install --user --upgrade --upgrade-strategy eager tiktok-live-events || echo "[events] pip install failed - using existing if present"
 
 if [[ -t 0 ]]; then
     read -rp "Enter the TikTok username (without @): " TTUSER

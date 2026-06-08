@@ -10,7 +10,7 @@ if errorlevel 1 (
 )
 
 echo [events] Updating tiktok-live-events...
-call python -m pip install --user --upgrade tiktok-live-events >nul 2>&1
+call python -m pip install --user --upgrade --upgrade-strategy eager tiktok-live-events
 if errorlevel 1 (
     echo [events] pip install failed. Continuing with existing install if present.
 )

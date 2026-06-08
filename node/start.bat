@@ -10,7 +10,7 @@ if errorlevel 1 (
 )
 
 echo [events] Updating tiktok-live-events...
-call npm i -g tiktok-live-events@latest >nul 2>&1
+call npm i -g tiktok-live-events@latest
 if errorlevel 1 (
     echo [events] Global install failed. Will use npx.
 )

@@ -8,7 +8,7 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 
 echo "[events] Updating tiktok-live-events..."
-npm i -g tiktok-live-events@latest >/dev/null 2>&1 || echo "[events] global install failed - will use npx"
+npm i -g tiktok-live-events@latest || echo "[events] global install failed - will use npx"
 
 if [[ -t 0 ]]; then
     read -rp "Enter the TikTok username (without @): " TTUSER
