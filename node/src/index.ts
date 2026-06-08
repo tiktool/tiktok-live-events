@@ -504,6 +504,7 @@ export class TikTokLive extends EventEmitter {
             const checkReady = () => {
                 if (ttOpen && decOpen) {
                     this._connected = true;
+                    this.reconnectAttempts = 0;
                     this.emit('connected');
                     // Send the im_enter_room first frame so TikTok starts shipping events.
                     if (imEnterB64) { try { ttws.send(Buffer.from(imEnterB64, 'base64')); } catch {} }
@@ -550,13 +551,23 @@ export class TikTokLive extends EventEmitter {
                 } catch {}
             });
 
+            let closeFired = false;
             const onClose = (code: number, reason: Buffer) => {
+                if (closeFired) return;
+                closeFired = true;
                 this._connected = false;
                 const r = reason?.toString() || '';
                 this.emit('disconnected', code, r);
                 if (this.directState?.heartbeat) { clearInterval(this.directState.heartbeat); this.directState.heartbeat = null; }
                 try { ttws.terminate(); } catch {}
                 try { decws.terminate(); } catch {}
+                // Reconnect on involuntary close (keepalive ping timeout, network blip).
+                if (!this.intentionalClose && !this.rateLimitTerminal && this.autoReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+                    this.reconnectAttempts++;
+                    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30_000);
+                    if (this.debug) console.log(`[tiktok-live-events] direct reconnect in ${delay}ms (attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts})`);
+                    setTimeout(() => { this.connectDirect().catch(() => {}); }, delay);
+                }
             };
             ttws.on('close', onClose);
             decws.on('close', onClose);

@@ -129,11 +129,12 @@ async function connectLoop(username: string, args: Args): Promise<void> {
                 resolveP();
             });
         });
-        const endFired: Promise<void> = new Promise<void>((resolveP) => {
-            live.on('disconnected', () => {
-                if (!args.json) console.log(fmt('disconnected', {}));
-                resolveP();
-            });
+        // CLI runs indefinitely. Individual disconnects log a warning but the
+        // SDK auto-reconnects under the hood, so we DO NOT resolve `endFired`
+        // on a disconnect anymore - only on terminal rate-limit / Ctrl+C.
+        const endFired: Promise<void> = new Promise<void>(() => { });
+        live.on('disconnected', () => {
+            if (!args.json) console.log(fmt('disconnected', {}));
         });
 
         live.on('error', (e: any) => console.error(fmt('error', e)));

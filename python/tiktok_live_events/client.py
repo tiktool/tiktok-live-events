@@ -129,7 +129,24 @@ class TikTokLive:
         if self.debug:
             logger.info("[tiktok-live-events] mode=%s", effective)
         if effective == "direct":
-            await self._run_direct()
+            # Auto-reconnect loop. TT WS frequently closes on keepalive ping
+            # timeout when the room hits a quiet patch; reconnect so the
+            # customer's session keeps flowing.
+            attempts = 0
+            while not self._stop.is_set():
+                await self._run_direct()
+                if self._stop.is_set() or not self.auto_reconnect:
+                    return
+                attempts += 1
+                if attempts > self.max_reconnect_attempts:
+                    return
+                delay = min(2 ** (attempts - 1), 30)
+                if self.debug:
+                    logger.info("[tiktok-live-events] direct reconnect in %ds (attempt %d/%d)", delay, attempts, self.max_reconnect_attempts)
+                try:
+                    await asyncio.wait_for(self._stop.wait(), timeout=delay)
+                except asyncio.TimeoutError:
+                    pass
             return
 
         url = f"{ENDPOINT}/?uniqueId={quote(self.unique_id)}"
