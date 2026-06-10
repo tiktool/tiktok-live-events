@@ -189,7 +189,7 @@ Every event is dispatched by name. Handlers receive a dict matching the event's 
 | `like` | `likeCount` (this batch), `totalLikes` (room cumulative). |
 | `member` | Viewer joined. **v3** adds `entrySource` (`"homepage_hot-live_cell"`, `"follow-tab"`, ...), `entryAction` (`"draw"`/`"click"`), `entryType` (`"rec"`). |
 | `social` | Follow / share. |
-| `roomUserSeq` | Periodic viewer count tick. |
+| `roomUserSeq` | Periodic viewer count tick. Also emitted as `viewer_count` (alias, same payload). |
 | `subscribe` | A viewer subscribed. |
 
 ### PK / battle events

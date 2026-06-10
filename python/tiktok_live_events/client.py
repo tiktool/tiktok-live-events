@@ -192,6 +192,9 @@ class TikTokLive:
                             continue
                         data = msg.get("data") if isinstance(msg.get("data"), dict) else msg
                         await self._dispatch(ev, data)
+                        # viewer_count is the documented friendly alias for roomUserSeq.
+                        if ev == "roomUserSeq":
+                            await self._dispatch("viewer_count", data)
                         await self._dispatch("event", data)
             except Exception as exc:
                 await self._dispatch("error", {"error": str(exc)})
@@ -353,6 +356,9 @@ class TikTokLive:
                             evt = ev.get("type")
                             if evt:
                                 await self._dispatch(evt, ev)
+                            # viewer_count is the documented friendly alias for roomUserSeq.
+                            if evt == "roomUserSeq":
+                                await self._dispatch("viewer_count", ev)
                             await self._dispatch("event", ev)
             except (asyncio.CancelledError, Exception):
                 return

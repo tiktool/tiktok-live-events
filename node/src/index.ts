@@ -234,6 +234,8 @@ export interface TikTokLiveEvents {
     member: (e: MemberEvent) => void;
     social: (e: SocialEvent) => void;
     roomUserSeq: (e: RoomUserSeqEvent) => void;
+    /** Alias of `roomUserSeq` - same payload, friendlier name. */
+    viewer_count: (e: RoomUserSeqEvent) => void;
     battle: (e: BattleEvent) => void;
     battleArmies: (e: BattleArmiesEvent) => void;
     battleItemCard: (e: BattleItemCardEvent) => void;
@@ -399,6 +401,8 @@ export class TikTokLive extends EventEmitter {
                     return;
                 }
                 (this as any).emit(evName, evData);
+                // viewer_count is the documented friendly alias for roomUserSeq.
+                if (evName === 'roomUserSeq') (this as any).emit('viewer_count', evData);
                 (this as any).emit('event', evData);
             });
 
@@ -545,6 +549,8 @@ export class TikTokLive extends EventEmitter {
                         for (const ev of msg.events) {
                             const evName: string | undefined = (ev as any)?.type;
                             if (evName) (this as any).emit(evName, ev);
+                            // viewer_count is the documented friendly alias for roomUserSeq.
+                            if (evName === 'roomUserSeq') (this as any).emit('viewer_count', ev);
                             (this as any).emit('event', ev);
                         }
                     }
