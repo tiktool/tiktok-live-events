@@ -4,8 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tiktok-live-events"
-version = "1.2.4"
-description = "TikTok LIVE event stream for Python. Read chat, gifts, viewers, follows, PK battles, AI captions, moderation deletes and 50+ real-time event types from any TikTok LIVE stream over a single WebSocket. 2026 edition."
+version = "1.2.5"
+description = "TikTok LIVE event stream for Python. Read chat, gifts, viewers, follows, PK battles, TikTok native captions, moderation deletes and 50+ real-time event types from any TikTok LIVE stream over a single WebSocket. 2026 edition."
 readme = "README.md"
 requires-python = ">=3.9"
 license = { text = "MIT" }
@@ -31,7 +31,7 @@ keywords = [
     "tiktok-live-battle",
     "tiktok-pk",
     "tiktok-pk-battle",
-    "tiktok-live-captions",
+    "tiktok-native-captions",
     "tiktok-webcast",
     "tiktok-events",
     "tiktok-realtime",

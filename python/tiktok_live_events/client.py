@@ -1,7 +1,7 @@
 """Async TikTok LIVE event stream.
 
 Connect to any TikTok LIVE stream over a single WebSocket and receive
-real-time chat, gifts, viewers, follows, PK battles, AI captions,
+real-time chat, gifts, viewers, follows, PK battles, TikTok native captions,
 moderation deletes, viewer entry-source analytics and 50+ other event
 types as clean JSON. Schema and decoding happen
 server-side - your code only ever sees a typed payload.

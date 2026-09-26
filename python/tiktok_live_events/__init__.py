@@ -13,7 +13,7 @@ Read TikTok LIVE events in 4 lines of Python::
 
     asyncio.run(live.run())
 
-Real-time chat, gifts, viewers, follows, PK battles, AI captions,
+Real-time chat, gifts, viewers, follows, PK battles, TikTok native captions,
 moderation deletes, viewer entry-source analytics and 50+ other live
 event types from any TikTok LIVE stream.
 """

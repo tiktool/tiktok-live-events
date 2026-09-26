@@ -4,7 +4,7 @@
 
 **The 2026 TikTok LIVE event stream for Node.js + TypeScript.**
 
-Read chat, gifts, viewers, follows, PK battles, AI captions, polls, karaoke, pictionary, live shopping, moderation deletes and **80+ real-time event types** from any TikTok LIVE stream in 4 lines of code.
+Read chat, gifts, viewers, follows, PK battles, TikTok native captions, polls, karaoke, pictionary, live shopping, moderation deletes and **80+ real-time event types** from any TikTok LIVE stream in 4 lines of code.
 
 [![npm](https://img.shields.io/npm/v/tiktok-live-events)](https://www.npmjs.com/package/tiktok-live-events)
 [![downloads](https://img.shields.io/npm/dm/tiktok-live-events)](https://www.npmjs.com/package/tiktok-live-events)
@@ -59,7 +59,7 @@ No key. No config. Just run it.
 
 ## What you get
 
-- Real-time **chat, gifts, likes, follows, viewer counts, PK battles, AI captions, gift catalog updates, moderation deletes, viewer entry-source analytics** and 50+ other live event types.
+- Real-time **chat, gifts, likes, follows, viewer counts, PK battles, TikTok native captions, gift catalog updates, moderation deletes, viewer entry-source analytics** and 50+ other live event types.
 - One WebSocket. Zero protocol code. No protobuf libraries. No proxy setup. No headless browser.
 - **Full TypeScript types** for every event. Your IDE autocompletes every field.
 - **Auto-reconnect**, structured error handling, typed emitter.

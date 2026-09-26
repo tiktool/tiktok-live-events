@@ -12,7 +12,7 @@ Agency rank feeds in Discord: gaming ranks, creator ranks and 99+ movers across 
 
 **The 2026 TikTok LIVE event stream. Node.js + Python.**
 
-Read chat, gifts, viewers, follows, PK battles, AI captions, polls, karaoke, pictionary, live shopping, moderation deletes and **80+ real-time event types** from any TikTok LIVE stream.
+Read chat, gifts, viewers, follows, PK battles, TikTok native captions, polls, karaoke, pictionary, live shopping, moderation deletes and **80+ real-time event types** from any TikTok LIVE stream.
 
 </div>
 
@@ -29,7 +29,7 @@ Both SDKs use the same backend. Pick the language that matches your stack.
 
 ## What you get
 
-- Real-time chat, gifts, likes, follows, viewer counts, PK battles, AI captions, gift catalog updates, moderation deletes, viewer entry-source analytics, and 50+ other live event types.
+- Real-time chat, gifts, likes, follows, viewer counts, PK battles, TikTok native captions, gift catalog updates, moderation deletes, viewer entry-source analytics, and 50+ other live event types.
 - One WebSocket. Zero protocol code. No protobuf libraries. No proxy setup. No headless browser.
 - Full type annotations - TypeScript interfaces in Node, TypedDict in Python.
 - Auto-reconnect, structured error handling.
