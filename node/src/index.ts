@@ -268,7 +268,7 @@ export interface TikTokLiveOptions {
      *   talks to TikTok via its own upstream session. Your IP never touches
      *   TikTok. Paid-tier default.
      * - `direct` - explicitly open two WebSockets: TikTok (your IP) + edge
-     *   decode. Free-tier default. Bypasses the managed edge entirely.
+     *   decode. Anonymous and Sandbox default. Bypasses the managed edge entirely.
      */
     mode?: 'auto' | 'managed' | 'direct';
 }

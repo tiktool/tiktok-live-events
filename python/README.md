@@ -73,11 +73,11 @@ The protocol decode happens on the [TikTools](https://tik.tools) edge. Your code
 
 ---
 
-## How it works (free / sandbox / paid)
+## How it works (anonymous / sandbox / paid)
 
 The SDK has two connect strategies and picks one automatically based on your tier.
 
-### Direct mode (default for free + sandbox)
+### Direct mode (default for anonymous + sandbox)
 
 Your machine opens the WebSocket to TikTok **from your own IP**. Our edge only:
 
@@ -95,7 +95,7 @@ You open ONE WebSocket to `wss://api.tik.tools`. The TikTools edge handles the u
 | Tier | Default mode | Override |
 |---|---|---|
 | **Anonymous** (no key) | `direct` | `mode='managed'` |
-| **Sandbox** (free signup) | `direct` | `mode='managed'` |
+| **Sandbox** (7-day free evaluation) | `direct` | `mode='managed'` |
 | **Basic+** (paid) | `managed` | `mode='direct'` |
 
 The default is `mode='auto'` - the SDK asks our edge which mode fits your tier and picks the right one. Force a mode explicitly when you want to override.

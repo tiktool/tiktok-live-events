@@ -111,7 +111,7 @@ async def _run_once(username: str, api_key: str, args: argparse.Namespace) -> tu
 
     @live.on("rate_limited")
     def _rl(e):  # noqa: ANN001
-        limit_msg["text"] = e.get("message") or "Anonymous limit reached. Grab a free API key at https://tik.tools to lift the cap."
+        limit_msg["text"] = e.get("message") or "Anonymous limit reached. Get an API key at https://tik.tools/pricing to lift the cap (7-day free evaluation)."
 
     await live.run()
     return (bool(limit_msg["text"]), limit_msg["text"])

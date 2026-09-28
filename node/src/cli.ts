@@ -125,7 +125,7 @@ async function connectLoop(username: string, args: Args): Promise<void> {
         let limitMsg = '';
         const limitFired: Promise<void> = new Promise<void>((resolveP) => {
             live.on('rateLimited', (e: any) => {
-                limitMsg = e?.message || e?.reason || 'Anonymous limit reached. Grab a free API key at https://tik.tools to lift the cap.';
+                limitMsg = e?.message || e?.reason || 'Anonymous limit reached. Get an API key at https://tik.tools/pricing to lift the cap (7-day free evaluation).';
                 resolveP();
             });
         });

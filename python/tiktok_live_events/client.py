@@ -61,8 +61,8 @@ class TikTokLive:
         self.unique_id = (unique_id or "").lstrip("@").strip()
         if not self.unique_id:
             raise ValueError("unique_id is required.")
-        # Anonymous mode is supported. Drop in a free key from
-        # https://tik.tools to lift the per-IP caps when you hit them.
+        # Anonymous mode is supported. Add an API key from
+        # https://tik.tools/pricing (7-day free evaluation) to lift the per-IP caps.
         self.api_key = (api_key or os.environ.get("TIKTOOL_API_KEY") or "").strip()
         self.auto_reconnect = auto_reconnect
         self.max_reconnect_attempts = max_reconnect_attempts
