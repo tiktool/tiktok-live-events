@@ -28,6 +28,13 @@ export interface TikTokUser {
     isSubscriber?: boolean;
     /** TikTok donator level 1-50. Present when the user has ever sent a gift. */
     payGrade?: number;
+    /**
+     * Whether this viewer follows the streamer: 0 = not following, 1 = follows,
+     * 2 = mutual (friends). Present on chat, like, member and social users; absent
+     * on gift senders and nested users. On a follow event it is the state before
+     * that follow.
+     */
+    followStatus?: number;
 }
 
 export interface BaseEvent {
@@ -73,6 +80,14 @@ export interface GiftEvent extends BaseEvent {
     senderUserId?: string;
     /** v3: relationship metadata between gifter and creator when TikTok attaches it. */
     relationship?: { joinDayNumber?: number; fromUser?: string; toUser?: string };
+    /** Default animation effect id of the gift. Absent when the gift has none. */
+    primaryEffectId?: number;
+    /** Colour the sender picked (1-based). Only on colour-selectable gifts such as Fireworks, Paper Crane, Sunglasses. */
+    colorId?: number;
+    /** Name of the picked colour, e.g. "Starry Blue". */
+    colorName?: string;
+    /** Animation effect id of the picked colour. Overrides `primaryEffectId` for this send. */
+    effectId?: number;
 }
 
 export interface LikeEvent extends BaseEvent {

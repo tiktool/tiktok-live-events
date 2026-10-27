@@ -171,8 +171,8 @@ Every event is dispatched by name via the typed emitter. `live.on('chat', e => .
 | `connected` | Socket open. |
 | `disconnected` | Socket close. Includes the close code + reason. |
 | `roomInfo` | One-shot post-connect: `{ roomId, wsHost, clusterRegion, connectedAt }`. |
-| `chat` | `user`, `comment`, `emotes`, optional `starred`. **v3** adds `language` (auto-detected), `messageUuid`, `replyToUser` (~8% of chats are replies). |
-| `gift` | `giftId`, `giftName`, `diamondCount`, `repeatCount`, `repeatEnd`, `giftType`. **v3** adds `transactionId`, `senderUserId`, `relationship` (`joinDayNumber`). |
+| `chat` | `user`, `comment`, `emotes`, optional `starred`. **v3** adds `language` (auto-detected), `messageUuid`, `replyToUser` (~8% of chats are replies). Users carry `followStatus` (0 = not following, 1 = follows, 2 = mutual). |
+| `gift` | `giftId`, `giftName`, `diamondCount`, `repeatCount`, `repeatEnd`, `giftType`. **v3** adds `transactionId`, `senderUserId`, `relationship` (`joinDayNumber`). Colour-selectable gifts (Fireworks, Paper Crane, Sunglasses) add `colorId`, `colorName` (e.g. `"Starry Blue"`) and `effectId`; `primaryEffectId` is the default animation. |
 | `like` | `likeCount` (this batch), `totalLikes` (room cumulative). |
 | `member` | Viewer joined. **v3** adds `entrySource` (`"homepage_hot-live_cell"`, `"follow-tab"`, ...), `entryAction` (`"draw"`/`"click"`), `entryType` (`"rec"`). |
 | `social` | Follow / share. |
