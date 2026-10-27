@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "tiktok-live-events"
-version = "1.2.6"
+version = "1.2.7"
 description = "TikTok LIVE event stream for Python. Read chat, gifts, viewers, follows, PK battles, TikTok native captions, moderation deletes and 50+ real-time event types from any TikTok LIVE stream over a single WebSocket. 2026 edition."
 readme = "README.md"
 requires-python = ">=3.9"
@@ -74,3 +74,6 @@ tiktok-live-events = "tiktok_live_events.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["tiktok_live_events"]
+
+[tool.hatch.build.targets.sdist]
+include = ["tiktok_live_events", "README.md", "LICENSE", "pyproject.toml"]

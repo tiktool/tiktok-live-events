@@ -3,8 +3,8 @@
 Connect to any TikTok LIVE stream over a single WebSocket and receive
 real-time chat, gifts, viewers, follows, PK battles, TikTok native captions,
 moderation deletes, viewer entry-source analytics and 50+ other event
-types as clean JSON. Schema, decoding and protocol updates happen
-server-side - your code only ever sees a typed payload.
+types as clean JSON. Schema and decoding happen server-side - your code
+only ever sees a typed payload.
 
 Example::
 
@@ -62,16 +62,16 @@ class TikTokLive:
         if not self.unique_id:
             raise ValueError("unique_id is required.")
         # Anonymous mode is supported. Add an API key from
-        # https://tik.tools/pricing (7-day free evaluation) to lift the per-IP caps.
+        # https://tik.tools/pricing to lift the per-IP caps.
         self.api_key = (api_key or os.environ.get("TIKTOOL_API_KEY") or "").strip()
         self.auto_reconnect = auto_reconnect
         self.max_reconnect_attempts = max_reconnect_attempts
         self.debug = debug
         # mode: 'auto' | 'managed' | 'direct'
-        #   auto    - ask the API which mode fits the plan
-        #             (anonymous / sandbox -> direct, basic+ -> managed)
-        #   managed - single WS to api.tik.tools
-        #   direct  - two WS: TikTok (your IP) + the decode endpoint
+        #   auto    - ask edge which mode to use based on tier
+        #             (anon / demo / sandbox -> direct, basic+ -> managed)
+        #   managed - single managed WS to the edge
+        #   direct  - stream WS from your network + edge /decode
         self.mode = mode if mode in ("auto", "managed", "direct") else "auto"
         self._handlers: Dict[str, List[Handler]] = {}
         self._ws: Optional[websockets.WebSocketClientProtocol] = None
@@ -269,8 +269,8 @@ class TikTokLive:
         return await loop.run_in_executor(None, self._http_post_sync, path, body)
 
     async def _run_direct(self) -> None:
-        """Direct mode: customer SDK opens TikTok WS itself (their IP), pipes
-        binary frames into our /decode WS, emits decoded JSON events.
+        """Direct mode: opens the stream WS from the caller's network, pipes
+        binary frames into the /decode WS, emits decoded JSON events.
         """
         # Resolve room_id + alive.
         try:

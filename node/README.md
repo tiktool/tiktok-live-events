@@ -60,7 +60,7 @@ No key. No config. Just run it.
 ## What you get
 
 - Real-time **chat, gifts, likes, follows, viewer counts, PK battles, TikTok native captions, gift catalog updates, moderation deletes, viewer entry-source analytics** and 50+ other live event types.
-- One WebSocket. Zero protocol code. No protobuf libraries. No proxy setup. No headless browser.
+- One WebSocket. Zero protocol code. No protobuf libraries. No headless browser.
 - **Full TypeScript types** for every event. Your IDE autocompletes every field.
 - **Auto-reconnect**, structured error handling, typed emitter.
 - **Tiny.** Under 5 KB compiled, one runtime dependency (`ws`).
@@ -75,16 +75,11 @@ The SDK has two connect strategies and picks one automatically based on your tie
 
 ### Direct mode (default for anonymous + sandbox)
 
-Your machine opens the WebSocket to TikTok **from your own IP**. The tik.tools API:
-
-1. Issues the connection details for the stream.
-2. Turns the raw frames into parsed JSON.
-
-You never run a protobuf library or a headless browser. The connection to TikTok comes from your own network.
+Your machine opens the stream connection from your own network. The TikTools edge provides the connection details and turns raw frames into parsed JSON. You never run a protobuf library or a headless browser.
 
 ### Managed mode (default for paid tiers)
 
-You open ONE WebSocket to `wss://api.tik.tools` and receive parsed events. Nothing connects to TikTok from your machine.
+You open ONE managed WebSocket to `wss://api.tik.tools` and receive parsed JSON events. Nothing else runs on your side.
 
 ### Picking mode
 
@@ -94,7 +89,7 @@ You open ONE WebSocket to `wss://api.tik.tools` and receive parsed events. Nothi
 | **Sandbox** (7-day free evaluation) | `direct` | `{ mode: 'managed' }` |
 | **Basic+** (paid) | `managed` | `{ mode: 'direct' }` |
 
-The default is `mode: 'auto'` - the SDK asks the API which mode fits your plan and picks the right one. Force a mode explicitly when you want to override.
+The default is `mode: 'auto'` - the SDK asks our edge which mode fits your tier and picks the right one. Force a mode explicitly when you want to override.
 
 ```ts
 const live = new TikTokLive('streamer', { apiKey: '...', mode: 'direct' }); // force direct
@@ -376,7 +371,7 @@ live.on('imDelete', e => {
 await live.connect();
 ```
 
-More ready-to-run recipes in [`examples/`](examples/).
+More ready-to-run recipes in [`examples/`](https://github.com/tiktool/tiktok-live-events/tree/main/node/examples).
 
 ---
 

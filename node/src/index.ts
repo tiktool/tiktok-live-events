@@ -275,13 +275,15 @@ export interface TikTokLiveOptions {
     /**
      * Connection mode.
      *
-     * - `auto` (default) - the API picks the mode for your plan: anonymous
-     *   and Sandbox keys connect to TikTok from your own IP, paid plans use
-     *   the managed connection.
-     * - `managed` - one WebSocket to api.tik.tools. Your IP never touches
-     *   TikTok. Paid-plan default.
-     * - `direct` - two WebSockets: TikTok (your IP) + the decode endpoint.
-     *   Anonymous and Sandbox default.
+     * - `auto` (default) - SDK asks the edge which mode to use based on tier:
+     *   anon / demo / sandbox tiers connect to TikTok from your own IP (the
+     *   edge only signs + decodes - it does NOT relay your traffic). Paid tiers
+     *   stay on the managed path for fan-out economics.
+     * - `managed` - explicitly use the edge as a relay. One WebSocket. The edge
+     *   talks to TikTok via its own upstream session. Your IP never touches
+     *   TikTok. Paid-tier default.
+     * - `direct` - explicitly open two WebSockets: TikTok (your IP) + edge
+     *   decode. Anonymous and Sandbox default. Bypasses the relay entirely.
      */
     mode?: 'auto' | 'managed' | 'direct';
 }
@@ -346,7 +348,8 @@ export class TikTokLive extends EventEmitter {
 
         let effective: 'managed' | 'direct' = this.mode === 'managed' || this.mode === 'direct' ? this.mode : 'managed';
         if (this.mode === 'auto') {
-            // Ask the API which mode fits this caller's plan.
+            // Ask the edge which mode fits this caller's tier. anon/sandbox/demo
+            // get routed to direct (their IP -> TikTok, edge only signs + decodes).
             try {
                 const headers: Record<string, string> = { 'content-type': 'application/json' };
                 if (this.apiKey) headers['x-api-key'] = this.apiKey;
@@ -458,8 +461,8 @@ export class TikTokLive extends EventEmitter {
 
     /**
      * Direct-mode connect. Two WebSockets: one to TikTok (your IP), one to our
-     * /decode endpoint. The API returns the connection details and heartbeat
-     * frames; the SDK pumps raw bytes from TikTok into /decode and
+     * /decode endpoint. We hand back the signed wss URL, connection cookies and binary
+     * heartbeat frames; the SDK pumps raw bytes from TikTok into /decode and
      * emits the JSON events that come back.
      */
     private async connectDirect(): Promise<void> {
@@ -484,7 +487,7 @@ export class TikTokLive extends EventEmitter {
         if (!roomId) throw new Error('could not resolve room_id for ' + this.uniqueId);
         if (!isLive) throw new Error('@' + this.uniqueId + ' is not currently live');
 
-        // Step 2: get connection details + heartbeat frames.
+        // Step 2: get signed wss URL + cookies + heartbeat frames.
         const credsRes = await fetch(`${HTTPS_ENDPOINT}/webcast/ws_credentials`, {
             method: 'POST', headers, body: JSON.stringify({ unique_id: this.uniqueId, room_id: roomId }),
         });

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.3.1 - 2026-10-27
+
+### Changed
+
+- Leaner package: build comments are no longer shipped. README wording refreshed.
+
 ## 1.3.0 - 2026-10-27
 
 ### Added
