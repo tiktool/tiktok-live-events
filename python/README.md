@@ -79,16 +79,16 @@ The SDK has two connect strategies and picks one automatically based on your tie
 
 ### Direct mode (default for anonymous + sandbox)
 
-Your machine opens the WebSocket to TikTok **from your own IP**. Our edge only:
+Your machine opens the WebSocket to TikTok **from your own IP**. The tik.tools API:
 
-1. Signs the URL + mints you a fresh session cookie.
-2. Receives raw frames over a side channel and returns parsed JSON.
+1. Issues the connection details for the stream.
+2. Turns the raw frames into parsed JSON.
 
-You never run a protobuf library, you never set up a proxy, you never run a headless browser. TikTok sees your own IP.
+You never run a protobuf library or a headless browser. The connection to TikTok comes from your own network.
 
 ### Managed mode (default for paid tiers)
 
-You open ONE WebSocket to `wss://api.tik.tools`. The TikTools edge handles the upstream connection. Your IP never touches TikTok.
+You open ONE WebSocket to `wss://api.tik.tools` and receive parsed events. Nothing connects to TikTok from your machine.
 
 ### Picking mode
 
@@ -98,7 +98,7 @@ You open ONE WebSocket to `wss://api.tik.tools`. The TikTools edge handles the u
 | **Sandbox** (7-day free evaluation) | `direct` | `mode='managed'` |
 | **Basic+** (paid) | `managed` | `mode='direct'` |
 
-The default is `mode='auto'` - the SDK asks our edge which mode fits your tier and picks the right one. Force a mode explicitly when you want to override.
+The default is `mode='auto'` - the SDK asks the API which mode fits your plan and picks the right one. Force a mode explicitly when you want to override.
 
 ```python
 live = TikTokLive('streamer', api_key='...', mode='direct')   # force direct
@@ -457,7 +457,7 @@ Signal `run()` to exit on the next iteration.
 
 ## Powered by
 
-This package connects to the [TikTools](https://tik.tools) edge. Schema, decoding, and protocol updates are handled server-side - your `pip install` never needs to bump when TikTok ships a wire change.
+This package connects to the [TikTools](https://tik.tools) edge. Schema, decoding and protocol updates are handled server-side - your `pip install` never needs to bump when TikTok ships a wire change.
 
 ---
 

@@ -3,7 +3,7 @@
 Connect to any TikTok LIVE stream over a single WebSocket and receive
 real-time chat, gifts, viewers, follows, PK battles, TikTok native captions,
 moderation deletes, viewer entry-source analytics and 50+ other event
-types as clean JSON. Schema and decoding happen
+types as clean JSON. Schema, decoding and protocol updates happen
 server-side - your code only ever sees a typed payload.
 
 Example::
@@ -68,10 +68,10 @@ class TikTokLive:
         self.max_reconnect_attempts = max_reconnect_attempts
         self.debug = debug
         # mode: 'auto' | 'managed' | 'direct'
-        #   auto    - ask edge which mode to use based on tier
-        #             (anon / demo / sandbox -> direct, basic+ -> managed)
-        #   managed - single WS to edge, edge runs upstream session
-        #   direct  - two WS: TikTok (your IP) + edge /decode
+        #   auto    - ask the API which mode fits the plan
+        #             (anonymous / sandbox -> direct, basic+ -> managed)
+        #   managed - single WS to api.tik.tools
+        #   direct  - two WS: TikTok (your IP) + the decode endpoint
         self.mode = mode if mode in ("auto", "managed", "direct") else "auto"
         self._handlers: Dict[str, List[Handler]] = {}
         self._ws: Optional[websockets.WebSocketClientProtocol] = None
