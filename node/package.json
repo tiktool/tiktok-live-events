@@ -1,7 +1,7 @@
 {
     "name": "tiktok-live-events",
-    "version": "1.3.1",
-    "description": "TikTok LIVE event stream for Node.js + TypeScript. Read chat, gifts, viewers, follows, PK battles, TikTok native captions, moderation deletes and 50+ real-time event types from any TikTok LIVE stream over a single WebSocket. 2026 edition.",
+    "version": "1.3.2",
+    "description": "TikTok LIVE event stream for Node.js + TypeScript. Read chat, gifts, viewers, follows, PK battles, TikTok native captions, moderation deletes and 90+ real-time event types from any TikTok LIVE stream over a single WebSocket. 2026 edition.",
     "main": "./dist/index.js",
     "module": "./dist/index.mjs",
     "types": "./dist/index.d.ts",
