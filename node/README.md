@@ -7,7 +7,6 @@
 Read chat, gifts, viewers, follows, PK battles, TikTok native captions, polls, karaoke, pictionary, live shopping, moderation deletes and **90+ real-time event types** from any TikTok LIVE stream in 4 lines of code.
 
 [![npm](https://img.shields.io/npm/v/tiktok-live-events)](https://www.npmjs.com/package/tiktok-live-events)
-[![downloads](https://img.shields.io/npm/dm/tiktok-live-events)](https://www.npmjs.com/package/tiktok-live-events)
 [![types](https://img.shields.io/npm/types/tiktok-live-events)](https://www.npmjs.com/package/tiktok-live-events)
 [![license](https://img.shields.io/npm/l/tiktok-live-events)](LICENSE)
 
