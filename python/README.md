@@ -4,7 +4,7 @@
 
 **The 2026 TikTok LIVE event stream for Python.**
 
-Read chat, gifts, viewers, follows, PK battles, TikTok native captions, polls, karaoke, pictionary, live shopping, moderation deletes and **80+ real-time event types** from any TikTok LIVE stream in 4 lines of code.
+Read chat, gifts, viewers, follows, PK battles, TikTok native captions, polls, karaoke, pictionary, live shopping, moderation deletes and **90+ real-time event types** from any TikTok LIVE stream in 4 lines of code.
 
 [![pypi](https://img.shields.io/pypi/v/tiktok-live-events)](https://pypi.org/project/tiktok-live-events/)
 [![downloads](https://img.shields.io/pypi/dm/tiktok-live-events)](https://pypi.org/project/tiktok-live-events/)
@@ -63,7 +63,7 @@ No key. No config. Just run it.
 
 ## What you get
 
-- Real-time **chat, gifts, likes, follows, viewer counts, PK battles, TikTok native captions, gift catalog updates, moderation deletes, viewer entry-source analytics** and 50+ other live event types.
+- Real-time **chat, gifts, likes, follows, viewer counts, PK battles, TikTok native captions, gift catalog updates, moderation deletes, viewer entry-source analytics** and the rest of the 90+ live event types.
 - One WebSocket. Zero protocol code. No protobuf libraries. No headless browser.
 - **Full TypedDict typing** for every event - Pyright + mypy autocomplete every field.
 - **Async first** (`asyncio`). Auto-reconnect. Sync + async handlers both supported.
@@ -90,7 +90,7 @@ You open ONE managed WebSocket to `wss://api.tik.tools` and receive parsed JSON 
 | Tier | Default mode | Override |
 |---|---|---|
 | **Anonymous** (no key) | `direct` | `mode='managed'` |
-| **Sandbox** (5,000 requests/day, 3 WS) | `direct` | `mode='managed'` |
+| **Sandbox** (7-day evaluation, no credit card; 5,000 requests/day, 3 streams) | `direct` | `mode='managed'` |
 | **Basic+** (paid) | `managed` | `mode='direct'` |
 
 The default is `mode='auto'` - the SDK asks our edge which mode fits your tier and picks the right one. Force a mode explicitly when you want to override.
